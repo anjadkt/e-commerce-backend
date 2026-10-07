@@ -1,9 +1,9 @@
 import { Router } from 'express';
-import { authRoutes } from '../modules/auth/auth.routes';
-import { userRoutes } from '../modules/user/user.routes';
-import { categoryRoutes } from '../modules/category/category.routes';
-import { productRoutes } from '../modules/product/product.routes';
-import { orderRoutes } from '../modules/order/order.routes';
+import { authRoutes } from './modules/auth/auth.routes';
+import { userRoutes } from './modules/user/user.routes';
+import { categoryRoutes } from './modules/category/category.routes';
+import { productRoutes } from './modules/product/product.routes';
+import { orderRoutes } from './modules/order/order.routes';
 
 const router = Router();
 

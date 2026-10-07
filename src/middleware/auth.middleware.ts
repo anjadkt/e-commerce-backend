@@ -1,8 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
 import { env } from '../config/env';
 import { UnauthorizedError, ForbiddenError } from '../utils/app-error';
 import { User, UserRole } from '../modules/user/user.model';
+import jwt from 'jsonwebtoken';
 
 interface JwtPayload {
   userId: string;
@@ -15,15 +15,19 @@ export const authenticate = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      throw new UnauthorizedError('Authentication token missing or invalid format');
+    const token =
+      req.cookies?.access_token ||
+      (req.headers.authorization?.startsWith('Bearer ')
+        ? req.headers.authorization.split(' ')[1]
+        : undefined);
+
+    if (!token) {
+      throw new UnauthorizedError('Authentication required. No access token provided.');
     }
 
-    const token = authHeader.split(' ')[1];
-    const decoded = jwt.verify(token, env.JWT_SECRET) as JwtPayload;
+    const decoded = jwt.verify(token, env.ACCESS_TOKEN_SECRET) as JwtPayload;
 
-    const user = await User.findById(decoded.userId);
+    const user = await User.findById(decoded.userId).select('_id role isActive');
     if (!user) {
       throw new UnauthorizedError('The user belonging to this token no longer exists');
     }
@@ -37,22 +41,4 @@ export const authenticate = async (
   } catch (error) {
     next(error);
   }
-};
-
-export const authorize = (...allowedRoles: UserRole[]) => {
-  return (req: Request, _res: Response, next: NextFunction): void => {
-    if (!req.user) {
-      return next(new UnauthorizedError('Please authenticate first'));
-    }
-
-    if (!allowedRoles.includes(req.user.role)) {
-      return next(
-        new ForbiddenError(
-          `Access denied. Role '${req.user.role}' is not authorized to access this resource`
-        )
-      );
-    }
-
-    next();
-  };
 };

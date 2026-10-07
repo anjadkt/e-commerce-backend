@@ -1,19 +1,38 @@
 import jwt from 'jsonwebtoken';
-import { User, IUserDocument } from '../user/user.model';
+import { User, IUserDocument, UserRole } from '../user/user.model';
 import { env } from '../../config/env';
-import { ConflictError, UnauthorizedError } from '../../utils/app-error';
+import { ConflictError, UnauthorizedError, ForbiddenError } from '../../utils/app-error';
 import { RegisterInput, LoginInput } from './auth.validation';
 
+interface TokenPayload {
+  userId: string;
+  role: UserRole;
+}
+
+export interface AuthTokens {
+  accessToken: string;
+  refreshToken: string;
+}
+
 export class AuthService {
-  static generateToken(user: IUserDocument): string {
-    return jwt.sign(
-      { userId: user._id.toString(), role: user.role },
-      env.JWT_SECRET,
-      { expiresIn: env.JWT_EXPIRES_IN as any }
-    );
+  static generateTokens(user: IUserDocument): AuthTokens {
+    const payload: TokenPayload = {
+      userId: user._id.toString(),
+      role: user.role,
+    };
+
+    const accessToken = jwt.sign(payload, env.ACCESS_TOKEN_SECRET, {
+      expiresIn: env.ACCESS_TOKEN_EXPIRES_IN as any,
+    });
+
+    const refreshToken = jwt.sign(payload, env.REFRESH_TOKEN_SECRET, {
+      expiresIn: env.REFRESH_TOKEN_EXPIRES_IN as any,
+    });
+
+    return { accessToken, refreshToken };
   }
 
-  static async register(input: RegisterInput): Promise<{ user: IUserDocument; token: string }> {
+  static async register(input: RegisterInput): Promise<{ user: IUserDocument; tokens: AuthTokens }> {
     const existingUser = await User.findOne({ email: input.email.toLowerCase() });
     if (existingUser) {
       throw new ConflictError('A user with this email address already exists');
@@ -22,18 +41,17 @@ export class AuthService {
     const user = new User({
       ...input,
       email: input.email.toLowerCase(),
-      // Default to customer unless explicitly allowed or configured
       role: input.role || 'customer',
       isActive: true,
     });
 
     await user.save();
-    const token = AuthService.generateToken(user);
+    const tokens = AuthService.generateTokens(user);
 
-    return { user, token };
+    return { user, tokens };
   }
 
-  static async login(input: LoginInput): Promise<{ user: IUserDocument; token: string }> {
+  static async login(input: LoginInput): Promise<{ user: IUserDocument; tokens: AuthTokens }> {
     const user = await User.findOne({ email: input.email.toLowerCase() }).select('+password');
     if (!user) {
       throw new UnauthorizedError('Invalid email or password');
@@ -48,10 +66,31 @@ export class AuthService {
       throw new UnauthorizedError('Your account has been deactivated. Please contact support.');
     }
 
-    const token = AuthService.generateToken(user);
+    const tokens = AuthService.generateTokens(user);
 
-    // Remove password before returning
     const userJson = user.toJSON();
-    return { user: userJson as any, token };
+    return { user: userJson as any, tokens };
+  }
+
+  static async refresh(refreshToken: string): Promise<AuthTokens> {
+    try {
+      const decoded = jwt.verify(refreshToken, env.REFRESH_TOKEN_SECRET) as TokenPayload;
+
+      const user = await User.findById(decoded.userId);
+      if (!user) {
+        throw new UnauthorizedError('The user belonging to this token no longer exists');
+      }
+
+      if (!user.isActive) {
+        throw new ForbiddenError('Your account has been deactivated. Please contact an administrator.');
+      }
+
+      return AuthService.generateTokens(user);
+    } catch (error: any) {
+      if (error.name === 'TokenExpiredError') {
+        throw new UnauthorizedError('Refresh token has expired. Please log in again.');
+      }
+      throw new UnauthorizedError('Invalid refresh token');
+    }
   }
 }
