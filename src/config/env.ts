@@ -14,6 +14,7 @@ export const env = {
   PORT: parseInt(getEnv('PORT', '5000'), 10),
   NODE_ENV: getEnv('NODE_ENV', 'development'),
   MONGODB_URI: getEnv('MONGODB_URI'),
+  CLIENT_URL: getEnv('CLIENT_URL', 'http://localhost:3000'),
   ACCESS_TOKEN_SECRET: getEnv('ACCESS_TOKEN_SECRET'),
   ACCESS_TOKEN_EXPIRES_IN: getEnv('ACCESS_TOKEN_EXPIRES_IN', '15m'),
   REFRESH_TOKEN_SECRET: getEnv('REFRESH_TOKEN_SECRET'),

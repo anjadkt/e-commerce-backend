@@ -21,35 +21,35 @@ const seedDatabase = async () => {
 
     // 1. Create Users
     const admin = new User({
-      name: 'System Administrator',
+      name: 'Rahul Sharma',
       email: 'admin@example.com',
       password: 'admin123',
       role: 'admin',
       isActive: true,
-      phone: '+1-555-0100',
+      phone: '9847123456',
       address: {
-        street: '100 Admin Plaza',
-        city: 'Metropolis',
-        state: 'NY',
-        postalCode: '10001',
-        country: 'USA',
+        street: '12 MG Road, Indiranagar',
+        city: 'Bengaluru',
+        state: 'Karnataka',
+        postalCode: '560038',
+        country: 'India',
       },
     });
     await admin.save();
 
     const customer = new User({
-      name: 'Jane Doe',
+      name: 'Anjad KT',
       email: 'customer@example.com',
-      password: 'customerPassword123',
+      password: 'customer123',
       role: 'customer',
       isActive: true,
-      phone: '+1-555-0199',
+      phone: '9778175095',
       address: {
-        street: '456 Customer Ave',
-        city: 'Brooklyn',
-        state: 'NY',
-        postalCode: '11201',
-        country: 'USA',
+        street: 'Green Valley, Calicut Road',
+        city: 'Kozhikode',
+        state: 'Kerala',
+        postalCode: '673001',
+        country: 'India',
       },
     });
     await customer.save();
@@ -125,8 +125,8 @@ const seedDatabase = async () => {
         name: 'Samsung Galaxy S24 Ultra',
         sku: 'SAM-S24U-512',
         description: 'Titanium frame, 200MP camera, Snapdragon 8 Gen 3',
-        price: 1299.99,
-        salePrice: 1199.99,
+        price: 129999,
+        salePrice: 119999,
         stock: 25,
         category: samsung._id,
         status: 'active' as const,
@@ -136,7 +136,8 @@ const seedDatabase = async () => {
         name: 'OnePlus 12 5G',
         sku: 'OP-12-256',
         description: 'Snapdragon 8 Gen 3, Hasselblad Camera, 100W SuperVOOC',
-        price: 799.99,
+        price: 64999,
+        salePrice: 59999,
         stock: 15,
         category: oneplus._id,
         status: 'active' as const,
@@ -146,7 +147,8 @@ const seedDatabase = async () => {
         name: 'Apple iPhone 15 Pro Max',
         sku: 'APL-IP15PM-256',
         description: 'A17 Pro chip, Titanium design, 5x telephoto camera',
-        price: 1199.99,
+        price: 159900,
+        salePrice: 149900,
         stock: 20,
         category: iphones._id,
         status: 'active' as const,
@@ -156,8 +158,8 @@ const seedDatabase = async () => {
         name: 'MacBook Pro 16" M3 Max',
         sku: 'APL-MBP16-M3M',
         description: '16-core CPU, 40-core GPU, Liquid Retina XDR display',
-        price: 3499.99,
-        salePrice: 3299.99,
+        price: 349900,
+        salePrice: 329900,
         stock: 10,
         category: laptops._id,
         status: 'active' as const,
@@ -167,7 +169,8 @@ const seedDatabase = async () => {
         name: 'Dell XPS 15 9530',
         sku: 'DELL-XPS15-I9',
         description: '13th Gen Intel Core i9, NVIDIA RTX 4070, 3.5K OLED touch',
-        price: 2499.99,
+        price: 249990,
+        salePrice: 229990,
         stock: 8,
         category: laptops._id,
         status: 'active' as const,
@@ -177,7 +180,8 @@ const seedDatabase = async () => {
         name: 'Custom Gaming Desktop PC',
         sku: 'DESK-GAME-RTX4090',
         description: 'AMD Ryzen 7 7800X3D, RTX 4090, 64GB DDR5 RAM, 2TB NVMe',
-        price: 3899.99,
+        price: 289999,
+        salePrice: 269999,
         stock: 5,
         category: desktops._id,
         status: 'active' as const,
@@ -224,8 +228,8 @@ const seedDatabase = async () => {
     console.log('🎉 Seeding successfully completed!');
     console.log('==========================================');
     console.log('🔑 Seeded Credentials:');
-    console.log('   Admin:    admin@example.com / adminPassword123');
-    console.log('   Customer: customer@example.com / customerPassword123');
+    console.log('   Admin:    admin@example.com / admin123');
+    console.log('   Customer: customer@example.com / customer123');
     console.log('==========================================\n');
 
     await mongoose.disconnect();
