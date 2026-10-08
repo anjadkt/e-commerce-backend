@@ -5,6 +5,7 @@ import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
 import { apiRoutes } from './routes';
 import { errorHandler, notFoundHandler } from './middleware/error.middleware';
+import { generalLimiter } from './middleware/rate-limit.middleware';
 import { env } from './config/env';
 
 export const createApp = (): Application => {
@@ -22,7 +23,7 @@ export const createApp = (): Application => {
   }
 
   // API Routes
-  app.use('/api/v1', apiRoutes);
+  app.use('/api/v1', generalLimiter, apiRoutes);
 
   // Fallback 404 for unknown endpoints
   app.use(notFoundHandler);

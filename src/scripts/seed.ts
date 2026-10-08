@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import bcrypt from 'bcryptjs';
 import { connectDatabase } from '../config/database';
 import { User } from '../modules/user/user.model';
 import { Category } from '../modules/category/category.model';
@@ -20,10 +21,13 @@ const seedDatabase = async () => {
     console.log('🧹 Cleared existing database records');
 
     // 1. Create Users
+    const adminPassword = await bcrypt.hash('admin123', 10);
+    const customerPassword = await bcrypt.hash('customer123', 10);
+
     const admin = new User({
       name: 'Rahul Sharma',
       email: 'admin@example.com',
-      password: 'admin123',
+      password: adminPassword,
       role: 'admin',
       isActive: true,
       phone: '9847123456',
@@ -40,7 +44,7 @@ const seedDatabase = async () => {
     const customer = new User({
       name: 'Anjad KT',
       email: 'customer@example.com',
-      password: 'customer123',
+      password: customerPassword,
       role: 'customer',
       isActive: true,
       phone: '9778175095',
