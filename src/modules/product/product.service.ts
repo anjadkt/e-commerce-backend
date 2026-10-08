@@ -85,6 +85,7 @@ export class ProductService {
     queryParams: ProductQueryParams,
     isAdmin: boolean = false
   ): Promise<{ products: IProductDocument[]; pagination: PaginationMeta }> {
+    
     const page = queryParams.page || 1;
     const limit = queryParams.limit || 10;
     const skip = (page - 1) * limit;

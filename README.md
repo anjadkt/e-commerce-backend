@@ -10,7 +10,7 @@ A scalable, feature-based **E-Commerce REST API** built with **Node.js, Express.
 e-commerce-backend/
 ├── src/
 │   ├── config/
-│   │   ├── env.ts                   # Type-safe environment variable schema (Zod)
+│   │   ├── env.ts                   # environment variable
 │   │   └── database.ts              # MongoDB Mongoose connection and lifecycle
 │   ├── middleware/
 │   │   ├── auth.middleware.ts       # JWT authentication & role-based authorization
@@ -21,18 +21,21 @@ e-commerce-backend/
 │   │   │   ├── auth.controller.ts
 │   │   │   ├── auth.routes.ts
 │   │   │   ├── auth.service.ts
-│   │   │   └── auth.validation.ts
+│   │   │   ├── auth.validation.ts
+│   │   │   └── cookies.ts
 │   │   ├── user/                    # Module 1B: User Management
 │   │   │   ├── user.controller.ts
+│   │   │   ├── user.mapper.ts       # Admin response DTO mapper
 │   │   │   ├── user.model.ts
 │   │   │   ├── user.routes.ts
 │   │   │   ├── user.service.ts
 │   │   │   └── user.validation.ts
-│   │   ├── category/                # Module 2: Multi-Level Categories (Unlimited Depth)
+│   │   ├── category/                # Module 2: Multi-Level Categories
 │   │   │   ├── category.controller.ts
 │   │   │   ├── category.model.ts
 │   │   │   ├── category.routes.ts
 │   │   │   ├── category.service.ts
+│   │   │   ├── category.utils.ts    # Tree builder, slugify & descendant helpers
 │   │   │   └── category.validation.ts
 │   │   ├── product/                 # Module 3: Product Management
 │   │   │   ├── product.controller.ts
@@ -46,8 +49,6 @@ e-commerce-backend/
 │   │       ├── order.routes.ts
 │   │       ├── order.service.ts
 │   │       └── order.validation.ts
-│   ├── routes/
-│   │   └── index.ts                 # Aggregates /api/v1 routes
 │   ├── scripts/
 │   │   └── seed.ts                  # Database seeder with sample tree & products
 │   ├── types/
@@ -56,9 +57,11 @@ e-commerce-backend/
 │   │   ├── api-response.ts          # Standard JSON response structure
 │   │   ├── app-error.ts             # Custom HTTP error classes
 │   │   └── async-handler.ts         # Async express error catcher wrapper
+│   ├── routes.ts                    # Aggregates /api/v1 routes
 │   ├── app.ts                       # Express app configuration & middleware
-│   └── server.ts                    # Server startup and graceful shutdown
-├── docker-compose.yml               # Optional MongoDB container
+│   └── server.ts                    # Server startup
+├── Dockerfile                       # Multi-stage production Dockerfile
+├── docker-compose.yml               # Docker Compose setup (MongoDB + Backend API)
 ├── tsconfig.json                    # TypeScript compiler config
 ├── package.json
 └── .env
@@ -66,42 +69,91 @@ e-commerce-backend/
 
 ---
 
-## 🚀 Quick Start
+## 🚀 Getting Started
 
-### 1. Configure Environment Variables
-Verify or update `.env` in the root folder:
+### 1. Environment Configuration
+
+Create or verify `.env` in the project root:
+
 ```env
 PORT=5000
 NODE_ENV=development
 MONGODB_URI=mongodb://127.0.0.1:27017/ecommerce_db
-JWT_SECRET=supersecret_jwt_key_ecommerce_2026_change_in_production
-JWT_EXPIRES_IN=7d
+CLIENT_URL=http://localhost:3000
+ACCESS_TOKEN_SECRET=supersecret_access_token_key_ecommerce_2026
+ACCESS_TOKEN_EXPIRES_IN=15m
+REFRESH_TOKEN_SECRET=supersecret_refresh_token_key_ecommerce_2026
+REFRESH_TOKEN_EXPIRES_IN=7d
+SALT_ROUNDS=10
 ```
 
-> **Note:** If running MongoDB locally, make sure MongoDB is running or run `docker compose up -d` to start the provided MongoDB container. You can also use a MongoDB Atlas connection string.
+> **Note:** For local Docker Compose execution, `MONGODB_URI` can point to `mongodb://mongodb:27017/ecommerce_db` or a remote MongoDB Atlas connection string.
 
-### 2. Seed Database (Optional but Recommended)
-Populates initial sample users, the multi-level category tree, products, and a sample order:
+---
+
+### Option A: Run with Docker
+
+Run both the **Node.js API** and **MongoDB** together with a single command:
+
+#### 1. Start Containers
+```bash
+docker compose up --build
+```
+
+#### 2. Seed Database
+In a new terminal window:
+```bash
+docker compose exec api npm run seed
+```
+
+#### 3. Stop Containers
+```bash
+docker compose down
+```
+
+The API will be available at: `http://localhost:5000/api/v1`.
+
+---
+
+### Option B: Run Locally with Node.js & npm
+
+Run the API directly on your host machine for development:
+
+#### 1. Start MongoDB
+Ensure MongoDB is running locally, on Atlas, or start just MongoDB via Docker:
+```bash
+docker compose up -d mongodb
+```
+
+#### 2. Install Dependencies
+```bash
+npm install
+```
+
+#### 3. Seed Database
 ```bash
 npm run seed
 ```
 
-**Pre-seeded Credentials:**
-- **Admin:** `admin@example.com` / `adminPassword123`
-- **Customer:** `customer@example.com` / `customerPassword123`
-
-### 3. Start Development Server
+#### 4. Start Development Server
 ```bash
 npm run dev
 ```
 
 The server starts at `http://localhost:5000/api/v1`.
 
-### 4. Build for Production
+#### 5. Build & Run for Production 
 ```bash
 npm run build
 npm start
 ```
+
+---
+
+### 🔑 Seeded Credentials
+When you run `npm run seed`:
+- **Admin Account:** `admin@example.com` / `admin123`
+- **Customer Account:** `customer@example.com` / `customer123`
 
 ---
 
@@ -145,19 +197,6 @@ npm start
 | `POST` | `/api/v1/categories` | Admin | Create category (optional `parent` ID) |
 | `PATCH` | `/api/v1/categories/:id` | Admin | Update category (validates circular references) |
 | `DELETE` | `/api/v1/categories/:id` | Admin | Delete category (safely blocks if subcategories exist) |
-
-#### Category Tree Structure Example:
-```
-Electronics
-├── Mobiles
-│   ├── Android Phones
-│   │   ├── Samsung
-│   │   └── OnePlus
-│   └── iPhones
-└── Computers
-    ├── Laptops
-    └── Desktops
-```
 
 ---
 

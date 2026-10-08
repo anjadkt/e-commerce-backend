@@ -9,6 +9,27 @@ services:
       MONGO_INITDB_DATABASE: ecommerce_db
     volumes:
       - mongo_data:/data/db
+    networks:
+      - ecommerce_network
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ecommerce_api
+    restart: always
+    ports:
+      - "5000:5000"
+    env_file:
+      - .env
+    depends_on:
+      - mongodb
+    networks:
+      - ecommerce_network
 
 volumes:
   mongo_data:
+
+networks:
+  ecommerce_network:
+    driver: bridge
