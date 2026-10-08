@@ -32,7 +32,7 @@ export class UserService {
   }
 
   static async getAllUsers(queryParams: UserQueryParams): Promise<{ users: IUserDocument[]; pagination: PaginationMeta }> {
-    
+
     const page = queryParams.page || 1;
     const limit = queryParams.limit || 10;
     const skip = (page - 1) * limit;
@@ -80,6 +80,7 @@ export class UserService {
     isActive: boolean,
     currentAdminId: string
   ): Promise<IUserDocument> {
+    
     if (targetUserId === currentAdminId && !isActive) {
       throw new BadRequestError('Admin cannot deactivate their own account');
     }

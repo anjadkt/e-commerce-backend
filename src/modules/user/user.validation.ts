@@ -18,7 +18,7 @@ export const updateProfileSchema = z.object({
 
 export const toggleUserStatusSchema = z.object({
   params: z.object({
-    id: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid user ID format'),
+    id: z.string('Invalid user ID format'),
   }),
   body: z.object({
     isActive: z.boolean({ message: 'isActive status boolean is required' }),
