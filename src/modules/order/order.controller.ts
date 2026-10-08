@@ -4,6 +4,7 @@ import { ApiResponse } from '../../utils/api-response';
 import { asyncHandler } from '../../utils/async-handler';
 
 export class OrderController {
+  
   static createOrder = asyncHandler(async (req: Request, res: Response) => {
     const order = await OrderService.createOrder(req.user!._id.toString(), req.body);
     return ApiResponse.created(res, 'Order placed successfully', order);

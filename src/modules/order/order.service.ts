@@ -7,7 +7,9 @@ import { CreateOrderInput, OrderQueryParams } from './order.validation';
 import { PaginationMeta } from '../../utils/api-response';
 
 export class OrderService {
+
   static async createOrder(userId: string, input: CreateOrderInput): Promise<IOrderDocument> {
+
     const user = await User.findById(userId);
     if (!user) {
       throw new NotFoundError('User not found');
@@ -31,7 +33,6 @@ export class OrderService {
       }
     }
 
-    // Group items by product ID to avoid duplicates
     const itemMap = new Map<string, number>();
     for (const item of input.items) {
       const currentQty = itemMap.get(item.productId) || 0;
@@ -102,6 +103,7 @@ export class OrderService {
     // Build order items with backend prices
     let totalAmount = 0;
     const orderItems: IOrderItem[] = products.map((product) => {
+      
       const qty = itemMap.get(product._id.toString())!;
       const unitPrice =
         product.salePrice !== undefined && product.salePrice !== null
@@ -141,6 +143,7 @@ export class OrderService {
     userId: string,
     queryParams: OrderQueryParams
   ): Promise<{ orders: IOrderDocument[]; pagination: PaginationMeta }> {
+    
     const page = queryParams.page || 1;
     const limit = queryParams.limit || 10;
     const skip = (page - 1) * limit;
