@@ -26,14 +26,6 @@ router.post(
   CategoryController.createCategory
 );
 
-router.patch(
-  '/:id',
-  authenticate,
-  authorize('admin'),
-  validate(updateCategorySchema),
-  CategoryController.updateCategory
-);
-
 router.put(
   '/:id',
   authenticate,

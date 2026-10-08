@@ -2,50 +2,20 @@ import { Types } from 'mongoose';
 import { Category, ICategoryDocument } from './category.model';
 import { BadRequestError, NotFoundError, ConflictError } from '../../utils/app-error';
 import { CreateCategoryInput, UpdateCategoryInput } from './category.validation';
+import {
+  slugify,
+  getAllDescendantIds,
+  buildCategoryTree,
+  CategoryTreeNode,
+} from './category.utils';
 
-export interface CategoryTreeNode {
-  _id: string;
-  name: string;
-  slug: string;
-  description?: string;
-  parent: string | null;
-  isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-  children: CategoryTreeNode[];
-}
+export { CategoryTreeNode };
 
 export class CategoryService {
-  private static slugify(text: string): string {
-    return text
-      .toLowerCase()
-      .trim()
-      .replace(/[^\w\s-]/g, '')
-      .replace(/[\s_-]+/g, '-')
-      .replace(/^-+|-+$/g, '');
-  }
-
-  static async getAllDescendantIds(categoryId: string | Types.ObjectId): Promise<Types.ObjectId[]> {
-    const targetId = typeof categoryId === 'string' ? new Types.ObjectId(categoryId) : categoryId;
-    const descendantIds: Types.ObjectId[] = [];
-
-    const queue: Types.ObjectId[] = [targetId];
-
-    while (queue.length > 0) {
-      const currentParent = queue.shift()!;
-      const children = await Category.find({ parent: currentParent }, { _id: 1 }).lean();
-      for (const child of children) {
-        const childId = child._id as Types.ObjectId;
-        descendantIds.push(childId);
-        queue.push(childId);
-      }
-    }
-
-    return descendantIds;
-  }
+  static getAllDescendantIds = getAllDescendantIds;
 
   static async createCategory(input: CreateCategoryInput): Promise<ICategoryDocument> {
-    const slug = input.slug ? CategoryService.slugify(input.slug) : CategoryService.slugify(input.name);
+    const slug = input.slug ? slugify(input.slug) : slugify(input.name);
 
     const existingSlug = await Category.findOne({ slug });
     if (existingSlug) {
@@ -72,22 +42,26 @@ export class CategoryService {
   }
 
   static async updateCategory(categoryId: string, input: UpdateCategoryInput): Promise<ICategoryDocument> {
+    
     const category = await Category.findById(categoryId);
     if (!category) {
       throw new NotFoundError('Category not found');
     }
 
     if (input.name && !input.slug) {
-      const newSlug = CategoryService.slugify(input.name);
+      const newSlug = slugify(input.name);
       const existingSlug = await Category.findOne({ slug: newSlug, _id: { $ne: category._id } });
       if (existingSlug) {
         throw new ConflictError(`A category with slug '${newSlug}' already exists`);
       }
       category.slug = newSlug;
       category.name = input.name;
+
     } else if (input.slug) {
-      const newSlug = CategoryService.slugify(input.slug);
+
+      const newSlug = slugify(input.slug);
       const existingSlug = await Category.findOne({ slug: newSlug, _id: { $ne: category._id } });
+
       if (existingSlug) {
         throw new ConflictError(`A category with slug '${newSlug}' already exists`);
       }
@@ -105,8 +79,8 @@ export class CategoryService {
       category.isActive = input.isActive;
     }
 
-    // Validate parent relationship and prevent circular references
     if (input.parent !== undefined) {
+      
       if (input.parent === null || input.parent === '') {
         category.parent = null;
       } else {
@@ -120,7 +94,7 @@ export class CategoryService {
         }
 
         // Check if the intended parent is a descendant of this category
-        const descendantIds = await CategoryService.getAllDescendantIds(categoryId);
+        const descendantIds = await getAllDescendantIds(categoryId);
         const isDescendant = descendantIds.some((id) => id.toString() === input.parent);
         if (isDescendant) {
           throw new BadRequestError(
@@ -137,7 +111,9 @@ export class CategoryService {
   }
 
   static async getAllCategories(filter: { parent?: string; isActive?: boolean }): Promise<ICategoryDocument[]> {
+
     const query: any = {};
+    
     if (filter.isActive !== undefined) {
       query.isActive = filter.isActive;
     }
@@ -151,39 +127,11 @@ export class CategoryService {
   static async getCategoryTree(onlyActive: boolean = false): Promise<CategoryTreeNode[]> {
     const query: any = onlyActive ? { isActive: true } : {};
     const allCategories = await Category.find(query).sort({ name: 1 }).lean();
-
-    const categoryMap = new Map<string, CategoryTreeNode>();
-
-    // First pass: initialize node map
-    allCategories.forEach((cat) => {
-      categoryMap.set(cat._id.toString(), {
-        _id: cat._id.toString(),
-        name: cat.name,
-        slug: cat.slug,
-        description: cat.description,
-        parent: cat.parent ? cat.parent.toString() : null,
-        isActive: cat.isActive,
-        createdAt: cat.createdAt,
-        updatedAt: cat.updatedAt,
-        children: [],
-      });
-    });
-
-    const rootNodes: CategoryTreeNode[] = [];
-
-    // Second pass: build tree
-    categoryMap.forEach((node) => {
-      if (node.parent && categoryMap.has(node.parent)) {
-        categoryMap.get(node.parent)!.children.push(node);
-      } else {
-        rootNodes.push(node);
-      }
-    });
-
-    return rootNodes;
+    return buildCategoryTree(allCategories);
   }
 
   static async getCategoryById(categoryId: string): Promise<ICategoryDocument> {
+    
     const category = await Category.findById(categoryId).populate('parent', 'name slug');
     if (!category) {
       throw new NotFoundError('Category not found');
