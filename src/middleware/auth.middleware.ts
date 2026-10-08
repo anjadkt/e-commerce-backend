@@ -3,11 +3,7 @@ import { env } from '../config/env';
 import { UnauthorizedError, ForbiddenError } from '../utils/app-error';
 import { User, UserRole } from '../modules/user/user.model';
 import jwt from 'jsonwebtoken';
-
-interface JwtPayload {
-  userId: string;
-  role: UserRole;
-}
+import { JwtPayload } from '../types/express';
 
 export const authenticate = async (
   req: Request,
@@ -27,7 +23,7 @@ export const authenticate = async (
 
     const decoded = jwt.verify(token, env.ACCESS_TOKEN_SECRET) as JwtPayload;
 
-    const user = await User.findById(decoded.userId).select('_id role isActive');
+    const user = await User.findById(decoded.userId).select('-password');
     if (!user) {
       throw new UnauthorizedError('The user belonging to this token no longer exists');
     }

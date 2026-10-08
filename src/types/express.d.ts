@@ -1,4 +1,9 @@
-import { IUserDocument } from '../modules/user/user.model';
+import { IUserDocument, UserRole } from '../modules/user/user.model';
+
+export interface JwtPayload {
+  userId: string;
+  role: UserRole;
+}
 
 declare global {
   namespace Express {

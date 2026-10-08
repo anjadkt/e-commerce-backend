@@ -60,8 +60,9 @@ export class CategoryService {
     }
 
     const category = new Category({
-      ...input,
+      name: input.name,
       slug,
+      description: input.description,
       parent: input.parent ? new Types.ObjectId(input.parent) : null,
       isActive: input.isActive !== undefined ? input.isActive : true,
     });

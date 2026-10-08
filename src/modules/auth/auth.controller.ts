@@ -1,22 +1,22 @@
 import { Request, Response } from 'express';
 import { AuthService } from './auth.service';
+import { UserService } from '../user/user.service';
 import { ApiResponse } from '../../utils/api-response';
 import { asyncHandler } from '../../utils/async-handler';
 import { UnauthorizedError } from '../../utils/app-error';
 import { setAuthCookies, clearAuthCookies } from './cookies';
 
 export class AuthController {
-  
   static register = asyncHandler(async (req: Request, res: Response) => {
     const { user, tokens } = await AuthService.register(req.body);
     setAuthCookies(res, tokens);
-    return ApiResponse.created(res, 'User registered successfully', { user, tokens });
+    return ApiResponse.created(res, 'User registered successfully', user );
   });
 
   static login = asyncHandler(async (req: Request, res: Response) => {
     const { user, tokens } = await AuthService.login(req.body);
     setAuthCookies(res, tokens);
-    return ApiResponse.success(res, 'Logged in successfully', { user, tokens });
+    return ApiResponse.success(res, 'Logged in successfully', user);
   });
 
   static refreshToken = asyncHandler(async (req: Request, res: Response) => {
@@ -27,7 +27,7 @@ export class AuthController {
 
     const tokens = await AuthService.refresh(refreshToken);
     setAuthCookies(res, tokens);
-    return ApiResponse.success(res, 'Tokens refreshed successfully', { tokens });
+    return ApiResponse.success(res, 'Tokens refreshed successfully');
   });
 
   static logout = asyncHandler(async (_req: Request, res: Response) => {
@@ -36,6 +36,7 @@ export class AuthController {
   });
 
   static getMe = asyncHandler(async (req: Request, res: Response) => {
-    return ApiResponse.success(res, 'User profile retrieved', req.user);
+    const user = await UserService.getProfile(req.user!._id.toString());
+    return ApiResponse.success(res, 'User profile retrieved', user);
   });
 }

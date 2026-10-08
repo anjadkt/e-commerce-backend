@@ -23,9 +23,7 @@ export interface IUser {
   updatedAt: Date;
 }
 
-export interface IUserDocument extends IUser, Document {
-  comparePassword(candidatePassword: string): Promise<boolean>;
-}
+export interface IUserDocument extends IUser, Document {}
 
 const userSchema = new Schema<IUserDocument>(
   {
@@ -48,7 +46,6 @@ const userSchema = new Schema<IUserDocument>(
     password: {
       type: String,
       required: [true, 'Password is required'],
-      minlength: [6, 'Password must be at least 6 characters long'],
       select: false,
     },
     role: {
@@ -86,22 +83,5 @@ const userSchema = new Schema<IUserDocument>(
   }
 );
 
-// Pre-save hook to hash password if modified
-userSchema.pre('save', async function () {
-  if (!this.isModified('password') || !this.password) {
-    return;
-  }
-
-  const salt = await bcrypt.genSalt(10);
-  this.password = await bcrypt.hash(this.password, salt);
-});
-
-// Instance method to compare password
-userSchema.methods.comparePassword = async function (
-  candidatePassword: string
-): Promise<boolean> {
-  if (!this.password) return false;
-  return bcrypt.compare(candidatePassword, this.password);
-};
 
 export const User: Model<IUserDocument> = mongoose.model<IUserDocument>('User', userSchema);

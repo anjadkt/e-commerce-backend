@@ -18,12 +18,6 @@ router.patch('/profile', authenticate, validate(updateProfileSchema), UserContro
 // Admin-only user management routes
 router.get('/', authenticate, authorize('admin'), validate(userQuerySchema), UserController.getAllUsers);
 router.get('/:id', authenticate, authorize('admin'), UserController.getUserById);
-router.patch(
-  '/:id/status',
-  authenticate,
-  authorize('admin'),
-  validate(toggleUserStatusSchema),
-  UserController.toggleStatus
-);
+router.patch('/:id/status', authenticate, authorize('admin'), validate(toggleUserStatusSchema), UserController.toggleStatus );
 
 export const userRoutes = router;

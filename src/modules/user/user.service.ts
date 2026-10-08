@@ -5,7 +5,7 @@ import { PaginationMeta } from '../../utils/api-response';
 
 export class UserService {
   static async getProfile(userId: string): Promise<IUserDocument> {
-    const user = await User.findById(userId);
+    const user = await User.findById(userId).select('-password');
     if (!user) {
       throw new NotFoundError('User not found');
     }
@@ -32,6 +32,7 @@ export class UserService {
   }
 
   static async getAllUsers(queryParams: UserQueryParams): Promise<{ users: IUserDocument[]; pagination: PaginationMeta }> {
+    
     const page = queryParams.page || 1;
     const limit = queryParams.limit || 10;
     const skip = (page - 1) * limit;
@@ -43,16 +44,12 @@ export class UserService {
       filter.$or = [{ name: searchRegex }, { email: searchRegex }];
     }
 
-    if (queryParams.role) {
-      filter.role = queryParams.role;
-    }
-
     if (queryParams.isActive !== undefined) {
       filter.isActive = queryParams.isActive;
     }
 
     const [users, totalItems] = await Promise.all([
-      User.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit),
+      User.find(filter).select('-password').sort({ createdAt: -1 }).skip(skip).limit(limit),
       User.countDocuments(filter),
     ]);
 
@@ -71,7 +68,7 @@ export class UserService {
   }
 
   static async getUserById(userId: string): Promise<IUserDocument> {
-    const user = await User.findById(userId);
+    const user = await User.findById(userId).select('-password');
     if (!user) {
       throw new NotFoundError('User not found');
     }

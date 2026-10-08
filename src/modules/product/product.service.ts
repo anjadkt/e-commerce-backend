@@ -24,10 +24,15 @@ export class ProductService {
     }
 
     const product = new Product({
-      ...input,
+      name: input.name,
       sku: input.sku.toUpperCase(),
+      description: input.description,
+      price: input.price,
+      salePrice: input.salePrice,
+      stock: input.stock,
       category: new Types.ObjectId(input.category),
       status,
+      images: input.images || [],
     });
 
     await product.save();
